@@ -3,4 +3,4 @@ The task requires developing an image classification model with the aim to minim
 
 The training data has 87,901 images labeled as ‘1‘ and 12099 images labeled as ‘0’. Hence the classes are highly imbalanced.
 ![Screenshot 2023-07-26 190456](https://github.com/FahadKhalid1/Image_classification_exercise/assets/22212834/17ac8a71-fa69-4189-a2ae-18d68bf8c609)
-![Screenshot 2023-07-19 165852](https://github.com/FahadKhalid1/Image_classification_exercise/assets/22212834/11298d01-8618-4e5e-94e3-5dd4c142d953)
+![Screenshot 2023-07-19 165852](https://github.com/FahadKhalid1/Image_classification_exercise/assets/22212834/0ad7b1d5-1234-42a2-a7d9-ae9a33b31957)
