@@ -18,8 +18,8 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 # Transformations for the input images
 transform = transforms.Compose([
-    transforms.Resize((64, 64)),
-    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+    # transforms.Resize((64, 64)),
+    # transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
 ])
 
 class UnlabeledDataset(torch.utils.data.Dataset):
@@ -72,15 +72,7 @@ def main():
     model.eval()
 
 
-
-    # # Transformations for the input images
-    # transform = transforms.Compose([
-    #     transforms.Resize((64, 64)),
-    #     transforms.ToTensor(),
-    #     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
-    # ])
-
-    val_img_folder = UnlabeledDataset(r'C:\ML_exercise\ml_exercise_therapanacea\val_img', transform=transform)
+    val_img_folder = UnlabeledDataset(r'\val_img', transform=transform)
     val_dataloader = torch.utils.data.DataLoader(val_img_folder, batch_size=1, shuffle=False, num_workers=4)
 
 
