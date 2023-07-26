@@ -44,6 +44,17 @@ class CustomDataset(torch.utils.data.Dataset):
                 image_paths.append(os.path.join(self.image_folder, filename))
         return image_paths
 
+################################################# Class Balancing #####################################################
+     # The function filter_images_with_equal_labels is part of a custom dataset class and is 
+     # used to balance the dataset. Initially, it reads a file containing image labels, counting
+     # the occurrence of each label assumed to be either 0 or 1. The function then establishes
+     #  the smaller count between the two labels to balance the dataset. Subsequently, it iterates
+     #  over the label file again, adding the corresponding image path and label to their 
+     # respective lists and incrementing the label count, but only if the current label 
+     # count is less than or equal to this minimum count. This ensures an equal number 
+     # of images for each label, creating a balanced dataset. The function returns these
+     #  lists of selected image paths and their corresponding labels.
+
     def filter_images_with_equal_labels(self):
         image_paths = []
         labels = []
