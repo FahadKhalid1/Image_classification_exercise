@@ -132,7 +132,7 @@ class CustomDataset(torch.utils.data.Dataset):
         return image_path, image, label
 
 # Define the root folder where the images and labels are stored
-root_folder = 'C:/ML_exercise/ml_new'
+root_folder = '/'
 
 # Create an instance of the CustomDataset
 dataset = CustomDataset(os.path.join(root_folder, 'train_img'), os.path.join(root_folder, 'label_train.txt'), transform=transform, augment=augment)
@@ -343,7 +343,7 @@ for epoch in range(num_epochs):
         # Save the model in the specified directory
         best_model_state = model.state_dict()
         model_name = 'Face_aug_bestmodel.pt'
-        bestmodel_folder = r'C:\ML_exercise\ml_new\models'
+        bestmodel_folder = r''  # define the complete paths
         model_path = os.path.join(bestmodel_folder, model_name)
         torch.save(best_model_state, model_path)
         print(f"Val_loss decreased from {best_val_loss / len(val_dataloader):.4f} to {val_loss / len(val_dataloader):.4f}. Saving the model to {model_path}.")

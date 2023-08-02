@@ -26,8 +26,9 @@ torch.cuda.set_device(device)
 # Define the transforms to apply to the images
 transform = transforms.Compose([
     transforms.ToTensor(),
-    # transforms.Normalize(mean=[0, 0, 0], std=[1, 1, 1]),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),  # Normalize the image
 ])
+
 
 class CustomDataset(torch.utils.data.Dataset):
     def __init__(self, image_folder, labels_file, transform=None):
@@ -109,7 +110,7 @@ def hter_loss(outputs, targets):
     return half_total_error
 
 # Define the custom dataset and dataloader
-root_folder = 'C:\ML_exercise\ml_exercise_therapanacea'
+root_folder = 'C:\ML_exercise\ml_new'
 dataset = CustomDataset(os.path.join(root_folder, 'train_img'), os.path.join(root_folder, 'label_train.txt'), transform=transform)
 
 # get dataset distribution
@@ -212,23 +213,31 @@ early_stopping_counter = 0
 
 train_loss_list = []
 val_loss_list = []
+train_accuracy_list = []
+val_accuracy_list = []
 
+best_val_accuracy = 0.0  # Initialize the best validation accuracy
 
 for epoch in range(num_epochs):
     model.train()
     commulative_train_loss = 0
-    log_interval_train_loss = 0
+    correct_train = 0
+    total_train = 0
 
     for batch_idx, (_, images, labels) in enumerate(train_dataloader):
         images = images.float().to(device)
         labels = labels.to(device)
         optimizer.zero_grad()
         outputs = model(images)
-        loss = hter_loss(outputs, labels)  # Change this line to use the hter_loss
+        loss = hter_loss(outputs, labels)
         commulative_train_loss += loss.item()
-        log_interval_train_loss += loss.item()
         loss.backward()
         optimizer.step()
+
+        # Calculate training accuracy
+        _, predicted_train = torch.max(outputs.data, 1)
+        total_train += labels.size(0)
+        correct_train += (predicted_train == labels).sum().item()
 
         # Increment global step counter
         global_step += 1
@@ -236,56 +245,72 @@ for epoch in range(num_epochs):
         # Print training progress
         if batch_idx % log_interval == 0 and not batch_idx == 0:
             writer.add_scalar('Loss/train', loss.item(), global_step)
-            print(f"Epoch {epoch+1}/{num_epochs} | Batch {batch_idx}/{len(train_dataloader)} | Interval Train Loss: {log_interval_train_loss/log_interval:.4f}")
-            log_interval_train_loss = 0
+            print(f"Epoch {epoch+1}/{num_epochs} | Batch {batch_idx}/{len(train_dataloader)} | Interval Train Loss: {commulative_train_loss/log_interval:.4f}")
+            commulative_train_loss = 0  # Reset the interval train loss
+
+    # Calculate training accuracy per epoch
+    train_accuracy = 100 * correct_train / total_train
+    train_accuracy_list.append(train_accuracy)
 
     train_loss_list.append(commulative_train_loss / len(train_dataloader))  # Append training loss
 
     # Validation loop
     model.eval()
     val_loss = 0.0
+    correct_val = 0
+    total_val = 0
     with torch.no_grad():
         for _, images, labels in val_dataloader:
             images = images.float().to(device)
             labels = labels.to(device)
             outputs = model(images)
-            val_loss += hter_loss(outputs, labels).item()  # Change this line to use the hter_loss
+            val_loss += hter_loss(outputs, labels)
+
+            # Calculate validation accuracy
+            _, predicted_val = torch.max(outputs.data, 1)
+            total_val += labels.size(0)
+            correct_val += (predicted_val == labels).sum().item()
 
     val_loss /= len(val_dataloader)
-    val_loss_list.append(val_loss)  # Append validation loss        
+    val_loss_list.append(val_loss)  # Append validation loss 
 
-    # Early stopping
-    if val_loss < best_val_loss:
-        best_val_loss = val_loss
-        epochs_no_improve = 0
+    # Calculate validation accuracy per epoch
+    val_accuracy = 100 * correct_val / total_val
+    val_accuracy_list.append(val_accuracy)
 
-        # Save the model in the specified directory
+    # Print training and validation accuracy per epoch
+    print(f"Epoch {epoch+1}/{num_epochs} | Train Loss: {train_loss_list[-1]:.4f} | Train Accuracy: {train_accuracy:.2f}% | Val Loss: {val_loss:.4f} | Val Accuracy: {val_accuracy:.2f}%")
+
+    # Save the best model if validation accuracy improves
+    if val_accuracy > best_val_accuracy:
+        best_val_accuracy = val_accuracy
         best_model_state = model.state_dict()
-        model_name = 'R50_finetune.pt'
-        bestmodel_folder = r'C:\ML_exercise\ml_exercise_therapanacea\models'
-        model_path = os.path.join(bestmodel_folder, model_name)
+        model_name = 'R50_model2.pt'
+        best_model_folder = 'C:\ML_exercise\ml_new\models'  # Specify the folder to save the best model
+        model_path = os.path.join(best_model_folder, model_name)
         torch.save(best_model_state, model_path)
-        print(f"Val_loss decreased from {best_val_loss / len(val_dataloader):.4f} to {val_loss / len(val_dataloader):.4f}. Saving the model to {model_path}.")
-    else:
-        epochs_no_improve += 1
-        if epochs_no_improve == early_stopping_limit:
-            print(f'Early stopping! Best validation loss: {best_val_loss}')
-            break  # exit loop
+        print(f"Best model saved at {model_path}")
 
-    # Log validation loss and accuracy to TensorBoard
-    val_loss /= len(val_dataloader)
-    writer.add_scalar('Loss/val', val_loss, epoch)
 
+# Plot the Training and validation loss curves
 plt.figure(figsize=(10, 5))
 plt.title("Training and Validation Loss")
-plt.plot(train_loss_list,label="Training")
-plt.plot(val_loss_list,label="Validation")
+plt.plot(train_loss_list, label="Training")
+plt.plot(val_loss_list, label="Validation")
 plt.xlabel("Epochs")
 plt.ylabel("Loss")
 plt.legend()
 plt.show()
 
+# Plot the Training and validation accuracy curves
+plt.figure(figsize=(10, 5))
+plt.title("Training and Validation Accuracy")
+plt.plot(train_accuracy_list, label="Training")
+plt.plot(val_accuracy_list, label="Validation")
+plt.xlabel("Epochs")
+plt.ylabel("Accuracy (%)")
+plt.legend()
+plt.show()
 
 # Close TensorBoard writer
 writer.close()
-
